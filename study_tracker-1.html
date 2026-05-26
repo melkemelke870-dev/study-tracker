@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ጥናት መከታተያ">
+<meta name="theme-color" content="#0d0f14">
+<title>የMelkamu ጥናት መከታተያ</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --card: #161a22;
+    --card2: #1c2130;
+    --accent: #f5a623;
+    --accent2: #4fc3f7;
+    --accent3: #a78bfa;
+    --green: #4ade80;
+    --red: #f87171;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --border: #2a3040;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans Ethiopic', sans-serif;
+    min-height: 100vh;
+    padding: 20px 16px 40px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+    animation: fadeDown 0.6s ease;
+  }
+  .header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .header .subtitle {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'Space Mono', monospace;
+  }
+  .date-display {
+    display: inline-block;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 18px;
+    font-size: 0.8rem;
+    color: var(--accent2);
+    margin-top: 10px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Progress Ring */
+  .progress-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    animation: fadeUp 0.7s ease 0.1s both;
+  }
+  .ring-wrap {
+    position: relative;
+    width: 110px;
+    height: 110px;
+  }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 10; }
+  .ring-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.8s cubic-bezier(.4,0,.2,1);
+  }
+  .ring-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    text-align: center;
+  }
+  .ring-label .pct { font-size: 1.3rem; font-weight: 700; font-family: 'Space Mono', monospace; }
+  .ring-label .lbl { font-size: 0.6rem; color: var(--muted); }
+  .stats-col { display: flex; flex-direction: column; gap: 10px; }
+  .stat-pill {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 160px;
+  }
+  .stat-pill .ico { font-size: 1.2rem; }
+  .stat-pill .val { font-size: 1rem; font-weight: 700; font-family: 'Space Mono', monospace; }
+  .stat-pill .nm { font-size: 0.7rem; color: var(--muted); }
+
+  /* Section */
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease both;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+  .section-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+  .section-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px;
+    color: var(--muted);
+  }
+  .section-badge span { color: var(--accent); font-weight: 700; }
+
+  /* Tasks */
+  .task-list { padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .task-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .task-item.done { background: #0d1a10; border-color: #1a3d22; }
+  .task-item.done::before { background: var(--green); opacity: 1; }
+  .task-item:active { transform: scale(0.98); }
+
+  .checkbox {
+    width: 22px; height: 22px; min-width: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    background: transparent;
+  }
+  .task-item.done .checkbox {
+    background: var(--green);
+    border-color: var(--green);
+    color: #0d1a10;
+  }
+  .task-content { flex: 1; }
+  .task-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+  .task-item.done .task-name { color: var(--muted); text-decoration: line-through; }
+  .task-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .task-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent2);
+    background: rgba(79,195,247,0.08);
+    border-radius: 6px;
+    padding: 2px 7px;
+    white-space: nowrap;
+  }
+
+  /* Rating */
+  .rating-section { padding: 12px 16px; }
+  .rating-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+  .stars { display: flex; gap: 8px; }
+  .star {
+    font-size: 1.6rem;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: all 0.15s ease;
+    filter: grayscale(1);
+  }
+  .star.active { opacity: 1; filter: none; }
+  .star:hover { transform: scale(1.2); }
+
+  /* Notes */
+  .notes-section { padding: 12px 16px 16px; }
+  .notes-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+  textarea {
+    width: 100%;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Noto Sans Ethiopic', sans-serif;
+    font-size: 0.85rem;
+    padding: 10px 12px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    line-height: 1.6;
+  }
+  textarea:focus { border-color: var(--accent2); }
+  textarea::placeholder { color: var(--muted); }
+
+  /* Date nav */
+  .date-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s ease 0.05s both;
+  }
+  .nav-btn {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: 'Noto Sans Ethiopic', sans-serif;
+  }
+  .nav-btn:hover { background: var(--border); }
+  .nav-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    min-width: 140px;
+    text-align: center;
+  }
+
+  /* Reset btn */
+  .actions { display: flex; gap: 10px; margin-bottom: 20px; animation: fadeUp 0.6s ease 0.2s both; }
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Noto Sans Ethiopic', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-primary { background: var(--accent); color: #0d0f14; }
+  .btn-primary:hover { background: #fbbf24; }
+  .btn-ghost { background: var(--card2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--border); }
+
+  /* History dots */
+  .history-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.6s ease 0.25s both;
+  }
+  .history-title { font-size: 0.85rem; color: var(--muted); margin-bottom: 12px; }
+  .history-dots { display: flex; gap: 6px; flex-wrap: wrap; }
+  .h-dot {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem;
+    font-family: 'Space Mono', monospace;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s;
+    color: var(--muted);
+  }
+  .h-dot:hover { transform: scale(1.15); }
+  .h-dot.empty { background: var(--card2); }
+  .h-dot.low { background: #1a2010; border-color: #2a4020; color: #4ade80; }
+  .h-dot.mid { background: #1a2a10; border-color: #3a5020; color: #86efac; }
+  .h-dot.high { background: #0d3a1a; border-color: #1a5a28; color: var(--green); }
+  .h-dot.full { background: #0a2e14; border-color: var(--green); color: var(--green); font-weight: 700; }
+
+  /* Motivational */
+  .motive {
+    text-align: center;
+    padding: 16px;
+    background: linear-gradient(135deg, #1a1520, #0d1520);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s ease 0.3s both;
+  }
+  .motive-text { font-size: 0.9rem; color: var(--accent3); line-height: 1.7; }
+  .motive-sub { font-size: 0.75rem; color: var(--muted); margin-top: 4px; font-family: 'Space Mono', monospace; }
+
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-15px); } to { opacity:1; transform:none; } }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(15px); } to { opacity:1; transform:none; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📚 የMelkamu ጥናት መከታተያ</h1>
+  <div class="subtitle">STUDY PROGRESS TRACKER</div>
+  <div class="date-display" id="todayDisplay">—</div>
+</div>
+
+<!-- Date Navigation -->
+<div class="date-nav">
+  <button class="nav-btn" onclick="changeDay(-1)">◀ ትናንት</button>
+  <div class="nav-date" id="navDate">—</div>
+  <button class="nav-btn" onclick="changeDay(1)">ነገ ▶</button>
+</div>
+
+<!-- Progress Rings -->
+<div class="progress-section">
+  <div class="ring-wrap">
+    <svg width="110" height="110" viewBox="0 0 110 110">
+      <circle class="ring-bg" cx="55" cy="55" r="45"/>
+      <circle class="ring-fill" id="mainRing" cx="55" cy="55" r="45"
+        stroke="var(--accent)" stroke-dasharray="283" stroke-dashoffset="283"/>
+    </svg>
+    <div class="ring-label">
+      <div class="pct" id="mainPct" style="color:var(--accent)">0%</div>
+      <div class="lbl">ዛሬ</div>
+    </div>
+  </div>
+  <div class="stats-col">
+    <div class="stat-pill">
+      <span class="ico">✅</span>
+      <div>
+        <div class="val" id="doneCount">0/0</div>
+        <div class="nm">የተሠሩ ተግባራት</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <span class="ico">⏱</span>
+      <div>
+        <div class="val" id="timeCount">0h</div>
+        <div class="nm">የጥናት ሰዓታት</div>
+      </div>
+    </div>
+    <div class="stat-pill">
+      <span class="ico">🔥</span>
+      <div>
+        <div class="val" id="streakCount">0</div>
+        <div class="nm">ተከታታይ ቀናት</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Motivational Quote -->
+<div class="motive">
+  <div class="motive-text" id="motive">ጥሩ ዕለት ይሁን! ዛሬ አንድ ሰዓት ቢያንስ ጥናት ጀምር። 💪</div>
+  <div class="motive-sub">MELKAMU — YOU GOT THIS! 💪</div>
+</div>
+
+<!-- Section 1: Entrance Exam Prep -->
+<div class="section" style="animation-delay:0.1s">
+  <div class="section-header">
+    <div class="section-title">
+      <div class="section-icon" style="background:#1a1e10">🎯</div>
+      <div>
+        <div>የየቀኑ የቅድሚያ ጥናት</div>
+        <div style="font-size:0.7rem;color:var(--muted);font-weight:400">3 ሰዓት • Entrance Exam</div>
+      </div>
+    </div>
+    <div class="section-badge">የተጠናቀቁ <span id="b1">0</span>/3</div>
+  </div>
+  <div class="task-list" id="tasks1">
+    <div class="task-item" onclick="toggleTask(this,'t1')" data-id="t1" data-time="1" data-section="1">
+      <div class="checkbox"></div>
+      <div class="task-content">
+        <div class="task-name">📐 Aptitude</div>
+        <div class="task-sub">የምዘና ፈተና ዋና ዋና ጥያቄዎችን መለማመድ</div>
+      </div>
+      <div class="task-time">1 ሰዓት</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this,'t2')" data-id="t2" data-time="1" data-section="1">
+      <div class="checkbox"></div>
+      <div class="task-content">
+        <div class="task-name">🔢 Maths</div>
+        <div class="task-sub">የሂሳብ ቀመሮችና ጥያቄዎችን መፍታት መለማመድ</div>
+      </div>
+      <div class="task-time">1 ሰዓት</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this,'t3')" data-id="t3" data-time="1" data-section="1">
+      <div class="checkbox"></div>
+      <div class="task-content">
+        <div class="task-name">🔤 English</div>
+        <div class="task-sub">Grammar & Reading Focus</div>
+      </div>
+      <div class="task-time">1 ሰዓት</div>
+    </div>
+  </div>
+</div>
+
+<!-- Section 2: Review Subjects -->
+<div class="section" style="animation-delay:0.15s">
+  <div class="section-header">
+    <div class="section-title">
+      <div class="section-icon" style="background:#101a20">📖</div>
+      <div>
+        <div>የሚፈራረቁ ትምህርቶች</div>
+        <div style="font-size:0.7rem;color:var(--muted);font-weight:400" id="todaySubjectLabel">1 ሰዓት</div>
+      </div>
+    </div>
+    <div class="section-badge">የተጠናቀቁ <span id="b2">0</span>/1</div>
+  </div>
+  <div class="task-list" id="tasks2">
+    <!-- ቀኑ ላይ ተመርኩዞ በJS ይሞላል -->
+  </div>
+</div>
+
+<!-- Section 3: Revision Plan -->
+<div class="section" style="animation-delay:0.2s">
+  <div class="section-header">
+    <div class="section-title">
+      <div class="section-icon" style="background:#1a1020">📅</div>
+      <div>
+        <div>የቀኖቹ ክፍፍል</div>
+        <div style="font-size:0.7rem;color:var(--muted);font-weight:400">እስከ ሰኔ 24</div>
+      </div>
+    </div>
+    <div class="section-badge">የተጠናቀቁ <span id="b3">0</span>/3</div>
+  </div>
+  <div class="task-list">
+    <div class="task-item" onclick="toggleTask(this,'t8')" data-id="t8" data-time="0" data-section="3">
+      <div class="checkbox"></div>
+      <div class="task-content">
+        <div class="task-name">📝 ሰኔ 1 – ሰኔ 10 ዕቅድ</div>
+        <div class="task-sub">የ11ኛ እና 12ኛ ክፍል ማስታወሻዎች (Short notes) ጻፍ</div>
+      </div>
+      <div class="task-time">Phase 1</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this,'t9')" data-id="t9" data-time="0" data-section="3">
+      <div class="checkbox"></div>
+      <div class="task-content">
+        <div class="task-name">📚 ሰኔ 11 – ሰኔ 20</div>
+        <div class="task-sub">መጽሃፍ ማንበብ፣ ያልፈቱትን የቀደሙ ፈተናዎች ሥራ</div>
+      </div>
+      <div class="task-time">Phase 2</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this,'t10')" data-id="t10" data-time="0" data-section="3">
+      <div class="checkbox"></div>
+      <div class="task-content">
+        <div class="task-name">🎯 ሰኔ 21 – ሰኔ 23</div>
+        <div class="task-sub">የተማርካቸውን ሁሉ በደንብ ደጋግመህ አጠናቅቅ</div>
+      </div>
+      <div class="task-time">Phase 3</div>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Self Rating -->
+<div class="section" style="animation-delay:0.25s">
+  <div class="section-header">
+    <div class="section-title">
+      <div class="section-icon" style="background:#1a1520">⭐</div>
+      <div>ዛሬ ምን ያህል ጥሩ ሠራሁ?</div>
+    </div>
+  </div>
+  <div class="rating-section">
+    <div class="rating-label">ዛሬ ለጥናትህ ደረጃ ስጥ።</div>
+    <div class="stars" id="stars">
+      <span class="star" onclick="setRating(1)">⭐</span>
+      <span class="star" onclick="setRating(2)">⭐</span>
+      <span class="star" onclick="setRating(3)">⭐</span>
+      <span class="star" onclick="setRating(4)">⭐</span>
+      <span class="star" onclick="setRating(5)">⭐</span>
+    </div>
+  </div>
+  <div class="notes-section">
+    <div class="notes-label">📝 ዛሬ ምን ተማርኩ? ምን ቀረ?</div>
+    <textarea id="dailyNote" rows="3" placeholder="ለምሳሌ፦ Aptitude ጥሩ ሄዷል፣ ግን English Reading ጊዜ አልነበረኝም..." oninput="saveNote()"></textarea>
+  </div>
+</div>
+
+<!-- History -->
+<div class="history-section">
+  <div class="history-title">📊 የ30 ቀናት መዝገብ</div>
+  <div class="history-dots" id="historyDots"></div>
+</div>
+
+<!-- Actions -->
+<div class="actions">
+  <button class="btn btn-ghost" onclick="resetDay()">🔄 ዳግም ጀምር</button>
+  <button class="btn btn-primary" onclick="saveDay()">💾 ዛሬን ጨርሻለሁ — ቀምጥ</button>
+</div>
+
+<script>
+// Day-based rotating subjects (0=Sun,1=Mon,2=Tue,3=Wed,4=Thu,5=Fri,6=Sat)
+const DAY_SUBJECTS = {
+  0: { id:'t7', icon:'🌍', name:'እሑድ — ሌሎች ትምህርቶች',   sub:'የሥራዎቹን መከለስ እና ለሚቀጥለው ሳምንት ዝግጅት', label:'እሑድ' },
+  1: { id:'t4', icon:'🏛', name:'ሰኞ — History',           sub:'አዲስ ምዕራፍ፣ ቀኖችንና ስሞችን ማስታወስ',         label:'ሰኞ' },
+  2: { id:'t5', icon:'🗺', name:'ማክሰኞ — Geography',       sub:'ካርታ እና አካባቢያዊ ጥናት',                    label:'ማክሰኞ' },
+  3: { id:'t6', icon:'💰', name:'ረቡዕ — Economics',        sub:'የኢኮኖሚ ንድፈ ሐሳቦችን ማጥናት',               label:'ረቡዕ' },
+  4: { id:'t4', icon:'🏛', name:'ሐሙስ — History',          sub:'አዲስ ምዕራፍ፣ ቀኖችንና ስሞችን ማስታወስ',         label:'ሐሙስ' },
+  5: { id:'t5', icon:'🗺', name:'አርብ — Geography',        sub:'ካርታ እና አካባቢያዊ ጥናት',                    label:'አርብ' },
+  6: { id:'t6', icon:'💰', name:'ቅዳሜ — Economics',        sub:'የኢኮኖሚ ንድፈ ሐሳቦችን ማጥናት',               label:'ቅዳሜ' },
+};
+
+function renderTodaySubject(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const dow = d.getDay();
+  const subj = DAY_SUBJECTS[dow];
+  const container = document.getElementById('tasks2');
+  const data = allData[dateStr] || { tasks: {} };
+  const isDone = data.tasks[subj.id] || false;
+
+  container.innerHTML = `
+    <div class="task-item${isDone ? ' done' : ''}" onclick="toggleTask(this,'${subj.id}')" data-id="${subj.id}" data-time="1" data-section="2">
+      <div class="checkbox">${isDone ? '✓' : ''}</div>
+      <div class="task-content">
+        <div class="task-name">${subj.icon} ${subj.name}</div>
+        <div class="task-sub">${subj.sub}</div>
+      </div>
+      <div class="task-time">1 ሰዓት</div>
+    </div>`;
+
+  document.getElementById('todaySubjectLabel').textContent = `1 ሰዓት • ${subj.label}`;
+}
+
+const QUOTES = [
+  "ጥሩ ዕለት ይሁን! ዛሬ አንድ ሰዓት ቢያንስ ጥናት ጀምር። 💪",
+  "ዛሬ ያደረግኸው ነገር ነገ ይጠቅምሃል። Keep going! 🚀",
+  "ፈተናው ቅርብ ነው — አስታውስ ቀኖቹ ያልፋሉ። 🎯",
+  "ዛሬ ከ◀ ትናንት ይልቅ አንድ ነገር ተማር። 📚",
+  "Melkamu — ዩኒቨርሲቲ ቅርብ ነው! ዛሬ ትጋ! 🏆",
+];
+
+let currentDateStr = getTodayStr();
+let allData = JSON.parse(localStorage.getItem('studyData') || '{}');
+
+function getTodayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getDateLabel(str) {
+  const d = new Date(str + 'T12:00:00');
+  const days = ['እሑድ','ሰኞ','ማክሰኞ','ረቡዕ','ሐሙስ','ዓርብ','ቅዳሜ'];
+  const months = ['ጃን','ፌብ','ማርች','ኤፕ','ሜይ','ጁን','ጁላ','ኦገ','ሴፕ','ኦክቶ','ኖቭ','ዲሴ'];
+  return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function initDay() {
+  document.getElementById('navDate').textContent = getDateLabel(currentDateStr);
+  document.getElementById('todayDisplay').textContent = currentDateStr;
+  const q = QUOTES[Math.floor(Math.random()*QUOTES.length)];
+  document.getElementById('motive').textContent = q;
+
+  renderTodaySubject(currentDateStr);
+  const data = allData[currentDateStr] || { tasks: {}, rating: 0, note: '' };
+
+  // restore tasks
+  document.querySelectorAll('.task-item').forEach(el => {
+    const id = el.dataset.id;
+    if (data.tasks[id]) el.classList.add('done');
+    else el.classList.remove('done');
+    el.querySelector('.checkbox').textContent = data.tasks[id] ? '✓' : '';
+  });
+
+  // restore rating
+  setRatingDisplay(data.rating || 0);
+
+  // restore note
+  document.getElementById('dailyNote').value = data.note || '';
+
+  updateProgress();
+  renderHistory();
+  calcStreak();
+}
+
+function toggleTask(el, id) {
+  el.classList.toggle('done');
+  const cb = el.querySelector('.checkbox');
+  cb.textContent = el.classList.contains('done') ? '✓' : '';
+  saveData();
+  updateProgress();
+}
+
+function updateProgress() {
+  const all = document.querySelectorAll('.task-item');
+  const done = document.querySelectorAll('.task-item.done');
+  const pct = all.length ? Math.round((done.length/all.length)*100) : 0;
+
+  document.getElementById('mainPct').textContent = pct + '%';
+  const offset = 283 - (283 * pct / 100);
+  document.getElementById('mainRing').style.strokeDashoffset = offset;
+
+  document.getElementById('doneCount').textContent = `${done.length}/${all.length}`;
+
+  // time
+  let hrs = 0;
+  done.forEach(el => hrs += parseFloat(el.dataset.time || 0));
+  document.getElementById('timeCount').textContent = hrs + 'h';
+
+  // per-section badges
+  [1,2,3].forEach(s => {
+    const sec = document.querySelectorAll(`[data-section="${s}"]`);
+    const sdone = document.querySelectorAll(`[data-section="${s}"].done`);
+    document.getElementById(`b${s}`).textContent = sdone.length;
+  });
+}
+
+function setRating(n) {
+  setRatingDisplay(n);
+  saveData();
+}
+
+function setRatingDisplay(n) {
+  document.querySelectorAll('.star').forEach((s,i) => {
+    s.classList.toggle('active', i < n);
+  });
+}
+
+function getCurrentRating() {
+  return document.querySelectorAll('.star.active').length;
+}
+
+function saveNote() { saveData(); }
+
+function saveData() {
+  const tasks = {};
+  document.querySelectorAll('.task-item').forEach(el => {
+    tasks[el.dataset.id] = el.classList.contains('done');
+  });
+  allData[currentDateStr] = {
+    tasks,
+    rating: getCurrentRating(),
+    note: document.getElementById('dailyNote').value
+  };
+  localStorage.setItem('studyData', JSON.stringify(allData));
+}
+
+function saveDay() {
+  saveData();
+  const done = document.querySelectorAll('.task-item.done').length;
+  const all = document.querySelectorAll('.task-item').length;
+  alert(`✅ ተጠናቅቋል!\n${done}/${all} ተግባራት ዛሬ ተጠናቀቁ።\nደህና ዋል Melkamu! 🎉`);
+  renderHistory();
+}
+
+function resetDay() {
+  if (!confirm('ዛሬውን ዳግም ልጀምር?')) return;
+  delete allData[currentDateStr];
+  localStorage.setItem('studyData', JSON.stringify(allData));
+  initDay();
+}
+
+function changeDay(dir) {
+  const d = new Date(currentDateStr + 'T12:00:00');
+  d.setDate(d.getDate() + dir);
+  currentDateStr = d.toISOString().split('T')[0];
+  initDay();
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyDots');
+  container.innerHTML = '';
+  const today = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const str = d.toISOString().split('T')[0];
+    const data = allData[str];
+    const dot = document.createElement('div');
+    dot.className = 'h-dot';
+    dot.title = getDateLabel(str);
+    dot.onclick = () => { currentDateStr = str; initDay(); };
+    if (data) {
+      const all = Object.keys(data.tasks).length;
+      const done = Object.values(data.tasks).filter(Boolean).length;
+      const pct = all ? done/all : 0;
+      if (pct >= 0.9) dot.className += ' full';
+      else if (pct >= 0.6) dot.className += ' high';
+      else if (pct >= 0.3) dot.className += ' mid';
+      else dot.className += ' low';
+      dot.textContent = Math.round(pct*100);
+    } else {
+      dot.className += ' empty';
+      dot.textContent = d.getDate();
+    }
+    container.appendChild(dot);
+  }
+}
+
+function calcStreak() {
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const str = d.toISOString().split('T')[0];
+    const data = allData[str];
+    if (!data) break;
+    const done = Object.values(data.tasks).filter(Boolean).length;
+    if (done === 0) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  document.getElementById('streakCount').textContent = streak;
+}
+
+initDay();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(e => console.log('SW error', e));
+  });
+}
+</script>
+</body>
+</html>
